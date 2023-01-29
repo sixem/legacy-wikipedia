@@ -1,7 +1,7 @@
 /** Get current location */
 const currentLocation = document.location.href;
 
-if(!currentLocation.includes('?useskin=vector'))
+if(!currentLocation.includes('useskin=vector'))
 {
 	/** If no `useskin=vector` parameter is set, set it */
 	const url = new URL(currentLocation);
