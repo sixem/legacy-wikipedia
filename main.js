@@ -1,22 +1,25 @@
-/** Get current location */
-const currentLocation = document.location.href;
-
-if(!currentLocation.includes('useskin=vector'))
+(() =>
 {
-	/** If no `useskin=vector` parameter is set, set it */
-	const url = new URL(currentLocation);
+	/** Get current location */
+	const currentLocation = document.location.href;
 
-	url.searchParams.set('useskin', 'vector');
+	if(!currentLocation.includes('useskin=vector'))
+	{
+		/** If no `useskin=vector` parameter is set, set it */
+		const url = new URL(currentLocation);
 
-	/** Redirect page */
-	window.location.replace(url);
-} else {
-	/** New URL object */
-	const url = new URL(window.location.href);
+		url.searchParams.set('useskin', 'vector');
 
-	/** Remove the `useskin` parameter */
-	url.searchParams.delete('useskin');
+		/** Redirect page */
+		window.location.replace(url);
+	} else {
+		/** New URL object */
+		const url = new URL(window.location.href);
 
-	/** Hide the parameter from the URL without reloading the page */
-	window.history.replaceState(null, null, url);
-}
+		/** Remove the `useskin` parameter */
+		url.searchParams.delete('useskin');
+
+		/** Hide the parameter from the URL without reloading the page */
+		window.history.replaceState(null, null, url);
+	}
+})();
