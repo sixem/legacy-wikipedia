@@ -3,7 +3,7 @@
 	"description": "Forces the old layout of Wikipedia",
 	"author": "emy",
 	"manifest_version": 3,
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"homepage_url": "https://github.com/sixem/legacy-wikipedia",
 	"icons": {
 		"48": "48.png",
@@ -11,8 +11,7 @@
 	},
 	"content_scripts": [{
 		"matches": [
-			"https://wikipedia.org/*",
-			"https://*.wikipedia.org/*"
+			"https://*.wikipedia.org/wiki/*"
 		],
 		"js": ["main.js"],
 		"run_at": "document_start"
