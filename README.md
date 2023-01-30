@@ -9,7 +9,7 @@
 <br/>
 
 ### Chrome
-[https://chrome.google.com/webstore/detail/legacy-wikipedia/hicopjpgmpodjhhddlgmjnincebphfaa](https://chrome.google.com/webstore/detail/legacy-wikipedia/hicopjpgmpodjhhddlgmjnincebphfaa)
+* [https://chrome.google.com/webstore/detail/legacy-wikipedia/hicopjpgmpodjhhddlgmjnincebphfaa](https://chrome.google.com/webstore/detail/legacy-wikipedia/hicopjpgmpodjhhddlgmjnincebphfaa)
 
 ### Firefox
-[https://addons.mozilla.org/en-US/firefox/addon/legacy-wikipedia/](https://addons.mozilla.org/en-US/firefox/addon/legacy-wikipedia/)
+* [https://addons.mozilla.org/en-US/firefox/addon/legacy-wikipedia/](https://addons.mozilla.org/en-US/firefox/addon/legacy-wikipedia/)
