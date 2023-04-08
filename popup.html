@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+    <head>
+        <link rel="stylesheet" href="popup.css"> 
+        <script src='popup.js'></script>
+    </head>
+    <body>
+        <div class="header">Legacy Wikipedia</div>
+
+        <div class="content">
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" id="hide-get-parameters"> <span>Hide GET parameters</span>
+                </label>
+                <span>Attempts to hide the GET parameters from the URL.</span>
+            </div>
+
+            <div class="section">Skin</div>
+
+            <span>Set the Wikipedia skin to use. For an overview over the available skins, see <a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Wikipedia:Skin">here</a>.</span>
+
+            <select name="skin" id="skin">
+                <option value="vector">Vector (default)</option>
+                <option value="monobook">MonoBook</option>
+                <option value="timeless">Timeless</option>
+                <option value="minerva">Minerva Neue</option>
+                <option value="vector-2022">Vector 2022</option>
+                <option value="modern">Modern (deprecated)</option>
+                <option value="cologneblue">Cologne Blue (deprecated)</option>
+            </select>
+
+            <div class="section">Exclude</div>
+
+            <div class="textbox-container">
+                <span>Disables the addon on specific language versions of Wikipedia.</span><br/><br/>
+                <span>Seperate with commas, example: <code>en,pt,de</code>:</span>
+                <input type="text" spellcheck="false" id="exclude-versions" placeholder="Excluded version..">
+            </div>
+        </div>
+
+        <button id="settings-save">Save</button>
+
+        <div id="version"></div><a href="#" id="website" target="_blank">Website</a>
+    </body>
+</html>

@@ -1,13 +1,19 @@
 {
 	"name": "Legacy Wikipedia",
-	"description": "Forces the old layout of Wikipedia",
+	"description": "Forces various old layouts of Wikipedia",
 	"author": "emy",
 	"manifest_version": 3,
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"homepage_url": "https://github.com/sixem/legacy-wikipedia",
 	"icons": {
 		"48": "48.png",
 		"128": "128.png"
+	},
+	"action": {
+		"default_popup": "popup.html"
+	},
+	"background": {
+		"service_worker": "service.js"
 	},
 	"content_scripts": [{
 		"matches": [
@@ -15,5 +21,8 @@
 		],
 		"js": ["main.js"],
 		"run_at": "document_start"
-	}]
+	}],
+	"permissions": [
+		"storage"
+	]
 }
