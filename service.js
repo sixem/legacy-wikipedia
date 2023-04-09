@@ -1,196 +1,208 @@
-/** Default options for the addon to use */
-const options = {
-	'hide-get-parameters': {
-		type: 'toggle',
-		default: true,
-		current: null
-	},
-	'exclude-versions': {
-		type: 'text',
-		default: false,
-		current: null
-	},
-	'skin': {
-		type: 'selection',
-		default: 'vector',
-		current: null
-	}
-};
-
-/** Set default storage values */
-Object.keys(options).forEach((key) =>
+(async () =>
 {
-	chrome.storage.local.get(key, (result) =>
-	{
-		if(!result.hasOwnProperty(key))
-		{
-			let value = new Object();
-			value[key] = options[key].default;
-			chrome.storage.local.set(value);
+	/** Default options for the addon to use */
+	const options = {
+		'hide-get-parameters': {
+			type: 'toggle',
+			default: true,
+			current: null
+		},
+		'exclude-versions': {
+			type: 'text',
+			default: false,
+			current: null
+		},
+		'skin': {
+			type: 'selection',
+			default: 'vector',
+			current: null
 		}
-	});
-});
-
-/**
- * Sets the current values of the options
- */
-const updateCurrentOptions = async () =>
-{
-	for(const key in options)
-	{
-		await chrome.storage.local.get(key, (result) =>
-		{
-			options[key].current = result[key];
-		});
-	}
-
-	return options;
-};
-
-/**
- * Options getter
- */
-const optionsGet = (args) =>
-{
-   return args.sendResponse(options);
-};
-
-/**
- * `onMessage` listener
- */
-chrome.runtime.onMessage.addListener((data, sender, sendResponse) =>
-{
-	/** Task IDs and their corresponding functions */
-	let tasks = {
-		optionsGet: optionsGet,
-		getStoredSetting: async (args) =>
-		{
-			const storedValue = options[args.data.key]?.current;
-
-			return args.sendResponse(storedValue !== null
-				? storedValue
-				: await chrome.storage.local.get(args.data.key)
-			);
-		},
-		updateCurrentOptions: async (args) =>
-		{
-			await updateCurrentOptions();
-			return args.sendResponse(options);
-		},
 	};
 
-	if(tasks[data.task])
+	/** Set default storage values */
+	for(const [key, value] of Object.entries(options))
 	{
-		/** Perform task */
-		tasks[data.task]({ data, sender, sendResponse });
-	}
-});
-
-/**
- * Fetches a stored setting
- * 
- * @param {string} key 
- */
-const getStoredSetting = async (key, fallback = null) =>
-{
-	const storedValue = options[key]?.current;
-
-	const keyValue = storedValue !== null
-		? storedValue
-		: await chrome.storage.local.get(key);
-
-	return keyValue !== null ? keyValue : fallback;
-};
-
-let expectRedirect = false;
-
-/** URL filter */
-const urlFilter = { url: [
-	{ hostSuffix: 'wikipedia.org', pathPrefix: '/wiki/' },
-	{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
-]};
-
-/**
- * Handles the URL of a tab
- * 
- * @param {object} tab 
- */
-const handleTab = async (tab) =>
-{
-	/** Get current location */
-	const currentLocation = tab.url;
-
-	/** New URL object */
-	const currentUrl = new URL(currentLocation);
-
-	/** Get stored settings */
-	const excludedSubdomains = await getStoredSetting('exclude-versions', null);
-
-	/** Get current skin */
-	let currentSkin = await getStoredSetting('skin', 'vector');
-
-	/** Check if the current subdomain is excluded */
-	if(excludedSubdomains
-		&& excludedSubdomains.length > 0)
-	{
-		const matches = /([^\/\.]+)\.wikipedia\.org\/(wiki|w)\//g.exec(currentLocation);
-
-		if(matches)
+		await chrome.storage.local.get(key, async (result) =>
 		{
-			const subDomain = matches[1].toLowerCase();
-
-			if(excludedSubdomains.split(',').map((s) => s.trim().toLowerCase()).includes(subDomain))
+			if(!result.hasOwnProperty(key)
+				|| result[key] === undefined)
 			{
-				/** Don't use a skin if site is excluded */
-				currentSkin = null;
+				console.log('Setting default value for', key, 'to', value.default, '...');
+
+				await chrome.storage.local.set({
+					[key]: value.default
+				});
+
+				value.current = value.default;
+			}
+		});
+	}
+
+	/**
+	 * Sets the current values of the options
+	 */
+	const updateCurrentOptions = async (options) =>
+	{
+		console.log('Updating options...', { options });
+
+		for(const [key, value] of Object.entries(options))
+		{
+			await chrome.storage.local.get(key, (result) =>
+			{
+				if(result[key] !== undefined)
+				{
+					console.log('Setting current value for', key, 'to', result[key], '...');
+					value.current = result[key];
+				}
+			});
+		}
+
+		return options;
+	};
+
+	/**
+	 * Options getter
+	 */
+	const optionsGet = (args) =>
+	{
+		return args.sendResponse(options);
+	};
+
+	/**
+	 * `onMessage` listener
+	 */
+	chrome.runtime.onMessage.addListener((data, sender, sendResponse) =>
+	{
+		/** Task IDs and their corresponding functions */
+		let tasks = {
+			optionsGet: optionsGet,
+			getStoredSetting: async (args) =>
+			{
+				const storedValue = options[args.data.key]?.current;
+
+				return args.sendResponse(storedValue !== null
+					? storedValue
+					: await chrome.storage.local.get(args.data.key)
+				);
+			},
+			updateCurrentOptions: async (args) =>
+			{
+				await updateCurrentOptions(options);
+				return args.sendResponse(options);
+			},
+		};
+
+		if(tasks[data.task])
+		{
+			/** Perform task */
+			tasks[data.task]({ data, sender, sendResponse });
+		}
+	});
+
+	/**
+	 * Fetches a stored setting
+	 * 
+	 * @param {string} key 
+	 */
+	const getStoredSetting = async (key, fallback = null) =>
+	{
+		const storedValue = options[key]?.current;
+
+		const keyValue = storedValue !== null
+			? storedValue
+			: await chrome.storage.local.get(key);
+
+		return keyValue !== null ? keyValue : fallback;
+	};
+
+	let expectRedirect = false;
+
+	/** URL filter */
+	const urlFilter = { url: [
+		{ hostSuffix: 'wikipedia.org', pathPrefix: '/wiki/' },
+		{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
+	]};
+
+	/**
+	 * Handles the URL of a tab
+	 * 
+	 * @param {object} tab 
+	 */
+	const handleTab = async (tab) =>
+	{
+		/** Get current location */
+		const currentLocation = tab.url;
+
+		/** New URL object */
+		const currentUrl = new URL(currentLocation);
+
+		/** Get excluded subdomains */
+		const excludedSubdomains = await getStoredSetting('exclude-versions', null);
+
+		/** Get current skin */
+		let currentSkin = await getStoredSetting('skin', 'vector');
+
+		/** Check if the current subdomain is excluded */
+		if(excludedSubdomains
+			&& excludedSubdomains.length > 0)
+		{
+			const matches = /([^\/\.]+)\.wikipedia\.org\/(wiki|w)\//g.exec(currentLocation);
+
+			if(matches)
+			{
+				const subDomain = matches[1].toLowerCase();
+
+				if(excludedSubdomains.split(',').map((s) => s.trim().toLowerCase()).includes(subDomain))
+				{
+					/** Don't use a skin if site is excluded */
+					currentSkin = null;
+				}
 			}
 		}
-	}
 
-	/** Set parameters that'd indicate a redirection */
-	expectRedirect = currentSkin ? [
-		'search'
-	].map((p) => currentUrl.searchParams.get(p)).filter((p) => p).length > 0 : false;
+		/** Set parameters that'd indicate a redirection */
+		expectRedirect = currentSkin ? [
+			'search'
+		].map((p) => currentUrl.searchParams.get(p)).filter((p) => p).length > 0 : false;
 
-	if((!(currentUrl.searchParams.get('useskin') === currentSkin) && currentSkin !== null))
-	{
-		/** If no `useskin=vector` parameter is set, set it */
-		currentUrl.searchParams.set('useskin', currentSkin);
+		if((!(currentUrl.searchParams.get('useskin') === currentSkin) && currentSkin !== null))
+		{
+			/** If no `useskin=vector` parameter is set, set it */
+			currentUrl.searchParams.set('useskin', currentSkin);
 
-		/** Redirect page */
-		chrome.tabs.update(tab.tabId, {
-			url: currentUrl.href
-		});
-	} else if(currentSkin === null && currentUrl.searchParams.get('useskin'))
-	{
-		currentUrl.searchParams.delete('useskin');
+			/** Redirect page */
+			chrome.tabs.update(tab.tabId, {
+				url: currentUrl.href
+			});
+		} else if(currentSkin === null && currentUrl.searchParams.get('useskin'))
+		{
+			currentUrl.searchParams.delete('useskin');
 
-		chrome.tabs.update(tab.tabId, {
-			url: currentUrl.href
-		});
-	}
-};
+			chrome.tabs.update(tab.tabId, {
+				url: currentUrl.href
+			});
+		}
+	};
 
-/**
- * [webNavigation] `onBeforeNavigate` listener
- */
-chrome.webNavigation.onBeforeNavigate.addListener(async (tab) =>
-{
-	handleTab(tab);
-}, urlFilter);
-
-/**
- * [webNavigation] `onCommitted` listener
- */
-chrome.webNavigation.onCommitted.addListener(async (tab) =>
-{
-	/** Handle expected redirections */
-	if(expectRedirect
-		&& tab.transitionQualifiers.includes('server_redirect'))
+	/**
+	 * [webNavigation] `onBeforeNavigate` listener
+	 */
+	chrome.webNavigation.onBeforeNavigate.addListener(async (tab) =>
 	{
 		handleTab(tab);
-	}
-}, urlFilter);
+	}, urlFilter);
 
-/** Update current values */
-updateCurrentOptions();
+	/**
+	 * [webNavigation] `onCommitted` listener
+	 */
+	chrome.webNavigation.onCommitted.addListener(async (tab) =>
+	{
+		/** Handle expected redirections */
+		if(expectRedirect
+			&& tab.transitionQualifiers
+			&& tab.transitionQualifiers.includes('server_redirect'))
+		{
+			handleTab(tab);
+		}
+	}, urlFilter);
+})();
