@@ -86,9 +86,6 @@ chrome.runtime.onMessage.addListener((data, sender, sendResponse) =>
 	}
 });
 
-/** Update current values */
-updateCurrentOptions();
-
 /**
  * Fetches a stored setting
  * 
@@ -107,11 +104,17 @@ const getStoredSetting = async (key, fallback = null) =>
 
 let expectRedirect = false;
 
+/** URL filter */
 const urlFilter = { url: [
 	{ hostSuffix: 'wikipedia.org', pathPrefix: '/wiki/' },
 	{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
 ]};
 
+/**
+ * Handles the URL of a tab
+ * 
+ * @param {object} tab 
+ */
 const handleTab = async (tab) =>
 {
 	/** Get current location */
@@ -130,7 +133,7 @@ const handleTab = async (tab) =>
 	if(excludedSubdomains
 		&& excludedSubdomains.length > 0)
 	{
-		const matches = /([^\/\.]+)\.wikipedia\.org\/wiki\//g.exec(currentLocation);
+		const matches = /([^\/\.]+)\.wikipedia\.org\/(wiki|w)\//g.exec(currentLocation);
 
 		if(matches)
 		{
@@ -145,9 +148,9 @@ const handleTab = async (tab) =>
 	}
 
 	/** Set parameters that'd indicate a redirection */
-	expectRedirect = [
+	expectRedirect = currentSkin ? [
 		'search'
-	].map((p) => currentUrl.searchParams.get(p)).filter((p) => p).length > 0 ? true : false;
+	].map((p) => currentUrl.searchParams.get(p)).filter((p) => p).length > 0 : false;
 
 	if((!(currentUrl.searchParams.get('useskin') === currentSkin) && currentSkin !== null))
 	{
@@ -158,14 +161,27 @@ const handleTab = async (tab) =>
 		chrome.tabs.update(tab.tabId, {
 			url: currentUrl.href
 		});
+	} else if(currentSkin === null && currentUrl.searchParams.get('useskin'))
+	{
+		currentUrl.searchParams.delete('useskin');
+
+		chrome.tabs.update(tab.tabId, {
+			url: currentUrl.href
+		});
 	}
 };
 
+/**
+ * [webNavigation] `onBeforeNavigate` listener
+ */
 chrome.webNavigation.onBeforeNavigate.addListener(async (tab) =>
 {
 	handleTab(tab);
 }, urlFilter);
 
+/**
+ * [webNavigation] `onCommitted` listener
+ */
 chrome.webNavigation.onCommitted.addListener(async (tab) =>
 {
 	/** Handle expected redirections */
@@ -175,3 +191,6 @@ chrome.webNavigation.onCommitted.addListener(async (tab) =>
 		handleTab(tab);
 	}
 }, urlFilter);
+
+/** Update current values */
+updateCurrentOptions();
