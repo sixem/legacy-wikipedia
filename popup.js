@@ -8,6 +8,25 @@ const getOptions = async () =>
 	);
 };
 
+const saveOptions = async (options) =>
+{
+	Object.keys(options).forEach(async (key) =>
+	{
+		if(options[key].current !== null)
+		{
+			await chrome.storage.local.set({
+				[key]: options[key].current
+			});
+		}
+	});
+
+	await chrome.runtime.sendMessage(
+		chrome.runtime.id, {
+			task: 'updateCurrentOptions'
+		}
+	);
+};
+
 /** Fired upon DOM load */
 window.addEventListener('DOMContentLoaded', async () =>
 {
@@ -126,22 +145,15 @@ window.addEventListener('DOMContentLoaded', async () =>
 	/** Detect save button click */
 	buttonSave.addEventListener('click', async () =>
 	{
-		Object.keys(options).forEach(async (key) =>
-		{
-			if(options[key].current !== null)
-			{
-				let value = new Object();
-				value[key] = options[key].current;
-				await chrome.storage.local.set(value);
-			}
-		});
-
-		await chrome.runtime.sendMessage(
-			chrome.runtime.id, {
-				task: 'updateCurrentOptions'
-			}
-		);
-		
+		await saveOptions(options);
 		window.close();
 	});
+});
+
+window.addEventListener('keypress', (e) =>
+{
+    if(e.key === 'Enter')
+	{
+		document.querySelector('body > button#settings-save').click();
+	}
 });
