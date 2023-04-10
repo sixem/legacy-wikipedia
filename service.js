@@ -19,24 +19,37 @@
 		}
 	};
 
+	/** URL filter */
+	const urlFilter = { url: [
+		{ hostSuffix: 'wikipedia.org', pathPrefix: '/wiki/' },
+		{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
+	]};
+
+	let expectRedirect = false;
+
 	/** Set default storage values */
-	for(const [key, value] of Object.entries(options))
+	const initializeStorage = async () =>
 	{
-		await chrome.storage.local.get(key, async (result) =>
+		for(const [key, value] of Object.entries(options))
 		{
-			if(!result.hasOwnProperty(key)
-				|| result[key] === undefined)
+			await chrome.storage.local.get(key, async (result) =>
 			{
-				console.log('Setting default value for', key, 'to', value.default, '...');
+				if(!result.hasOwnProperty(key)
+					|| result[key] === undefined)
+				{
+					console.log('Setting default value for', key, 'to', value.default, '...');
+	
+					await chrome.storage.local.set({
+						[key]: value.default
+					});
+	
+					value.current = value.default;
+				}
+			});
+		}
+	};
 
-				await chrome.storage.local.set({
-					[key]: value.default
-				});
-
-				value.current = value.default;
-			}
-		});
-	}
+	await initializeStorage();
 
 	/**
 	 * Sets the current values of the options
@@ -78,12 +91,9 @@
 			optionsGet: optionsGet,
 			getStoredSetting: async (args) =>
 			{
-				const storedValue = options[args.data.key]?.current;
-
-				return args.sendResponse(storedValue !== null
-					? storedValue
-					: await chrome.storage.local.get(args.data.key)
-				);
+				return args.sendResponse(getStoredSetting(
+					args.data.key, args.data.fallback
+				));
 			},
 			updateCurrentOptions: async (args) =>
 			{
@@ -106,22 +116,22 @@
 	 */
 	const getStoredSetting = async (key, fallback = null) =>
 	{
-		const storedValue = options[key]?.current;
+		const storedValue = options[key].current;
 
-		const keyValue = storedValue !== null
-			? storedValue
-			: await chrome.storage.local.get(key);
+		let keyValue;
 
-		return keyValue !== null ? keyValue : fallback;
+		if(storedValue === null)
+		{
+			let keyValue = await chrome.storage.local.get(key) || fallback;
+			options[key].current = keyValue;
+		} else {
+			keyValue = storedValue;
+		}
+
+		return (keyValue !== null && keyValue !== undefined)
+			? keyValue
+			: fallback;
 	};
-
-	let expectRedirect = false;
-
-	/** URL filter */
-	const urlFilter = { url: [
-		{ hostSuffix: 'wikipedia.org', pathPrefix: '/wiki/' },
-		{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
-	]};
 
 	/**
 	 * Handles the URL of a tab
@@ -137,7 +147,7 @@
 		const currentUrl = new URL(currentLocation);
 
 		/** Get excluded subdomains */
-		const excludedSubdomains = await getStoredSetting('exclude-versions', null);
+		const excludedSubdomains = await getStoredSetting('exclude-versions', []);
 
 		/** Get current skin */
 		let currentSkin = await getStoredSetting('skin', 'vector');
@@ -171,16 +181,26 @@
 			currentUrl.searchParams.set('useskin', currentSkin);
 
 			/** Redirect page */
-			chrome.tabs.update(tab.tabId, {
-				url: currentUrl.href
-			});
+			try
+			{
+				chrome.tabs.update(tab.tabId, {
+					url: currentUrl.href
+				});
+			} catch(e) {
+				console.error(e);
+			}
 		} else if(currentSkin === null && currentUrl.searchParams.get('useskin'))
 		{
 			currentUrl.searchParams.delete('useskin');
 
-			chrome.tabs.update(tab.tabId, {
-				url: currentUrl.href
-			});
+			try
+			{
+				chrome.tabs.update(tab.tabId, {
+					url: currentUrl.href
+				});
+			} catch(e) {
+				console.error(e);
+			}
 		}
 	};
 
@@ -205,4 +225,9 @@
 			handleTab(tab);
 		}
 	}, urlFilter);
+
+	chrome.runtime.onInstalled.addListener(async () =>
+	{
+		await initializeStorage();
+	});
 })();

@@ -7,15 +7,11 @@
 	 */
 	const getStoredSetting = async (key, fallback = null) =>
 	{
-		const stored = await chrome.runtime.sendMessage(
+		return await chrome.runtime.sendMessage(
 			chrome.runtime.id, {
-				task: 'getStoredSetting', key
+				task: 'getStoredSetting', key, fallback
 			}
 		);
-
-		return stored !== null
-			? stored
-			: fallback;
 	};
 	
 	/** Get current location */
