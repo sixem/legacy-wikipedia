@@ -4,7 +4,7 @@
 
 <h1 align="center">Legacy Wikipedia</h1>
 
-<p align="center">A simple browser addon that forces the old layout of Wikipedia</p>
+<p align="center">A browser addon that enables the usage of various old layouts of Wikipedia</p>
 
 <br/>
 
