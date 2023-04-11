@@ -25,6 +25,8 @@
 		{ hostSuffix: 'wikipedia.org', pathPrefix: '/w/' }
 	]};
 
+	const tabCache = {};
+
 	let expectRedirect = false;
 
 	/** Set default storage values */
@@ -43,7 +45,7 @@
 						[key]: value.default
 					});
 	
-					value.current = value.default;
+					options[key].current = value.default;
 				}
 			});
 		}
@@ -118,13 +120,22 @@
 	{
 		const storedValue = options[key].current;
 
-		let keyValue;
+		let keyValue = null;
 
 		if(storedValue === null)
 		{
-			let keyValue = await chrome.storage.local.get(key) || fallback;
-			options[key].current = keyValue;
+			console.log('Fetching (and updating) value for', key, 'from storage...');
+			
+			let storageData = await chrome.storage.local.get(key);
+
+			options[key].current = storageData.hasOwnProperty(key) ? (
+				storageData[key] !== null ? storageData[key] : fallback
+			) : fallback;
+
+			keyValue = options[key].current;
 		} else {
+			console.log('Fetched value for', key, 'from cache...');
+
 			keyValue = storedValue;
 		}
 
@@ -151,7 +162,7 @@
 
 		/** Get current skin */
 		let currentSkin = await getStoredSetting('skin', 'vector');
-
+		
 		/** Check if the current subdomain is excluded */
 		if(excludedSubdomains
 			&& excludedSubdomains.length > 0)
@@ -181,26 +192,16 @@
 			currentUrl.searchParams.set('useskin', currentSkin);
 
 			/** Redirect page */
-			try
-			{
-				chrome.tabs.update(tab.tabId, {
-					url: currentUrl.href
-				});
-			} catch(e) {
-				console.error(e);
-			}
+			chrome.tabs.update(tab.tabId, {
+				url: currentUrl.href
+			});
 		} else if(currentSkin === null && currentUrl.searchParams.get('useskin'))
 		{
 			currentUrl.searchParams.delete('useskin');
 
-			try
-			{
-				chrome.tabs.update(tab.tabId, {
-					url: currentUrl.href
-				});
-			} catch(e) {
-				console.error(e);
-			}
+			chrome.tabs.update(tab.tabId, {
+				url: currentUrl.href
+			});
 		}
 	};
 
