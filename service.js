@@ -84,34 +84,6 @@
 	};
 
 	/**
-	 * `onMessage` listener
-	 */
-	chrome.runtime.onMessage.addListener((data, sender, sendResponse) =>
-	{
-		/** Task IDs and their corresponding functions */
-		let tasks = {
-			optionsGet: optionsGet,
-			getStoredSetting: async (args) =>
-			{
-				return args.sendResponse(getStoredSetting(
-					args.data.key, args.data.fallback
-				));
-			},
-			updateCurrentOptions: async (args) =>
-			{
-				await updateCurrentOptions(options);
-				return args.sendResponse(options);
-			},
-		};
-
-		if(tasks[data.task])
-		{
-			/** Perform task */
-			tasks[data.task]({ data, sender, sendResponse });
-		}
-	});
-
-	/**
 	 * Fetches a stored setting
 	 * 
 	 * @param {string} key 
@@ -124,8 +96,6 @@
 
 		if(storedValue === null)
 		{
-			console.log('Fetching (and updating) value for', key, 'from storage...');
-			
 			let storageData = await chrome.storage.local.get(key);
 
 			options[key].current = storageData.hasOwnProperty(key) ? (
@@ -133,10 +103,10 @@
 			) : fallback;
 
 			keyValue = options[key].current;
+			console.log(`Fetching (and updating) value for ${key} from storage:`, keyValue);
 		} else {
-			console.log('Fetched value for', key, 'from cache...');
-
 			keyValue = storedValue;
+			console.log(`Fetched value for ${key} from cache:`, keyValue);
 		}
 
 		return (keyValue !== null && keyValue !== undefined)
@@ -204,6 +174,37 @@
 			});
 		}
 	};
+
+	/**
+	 * `onMessage` listener
+	 */
+	chrome.runtime.onMessage.addListener((data, sender, sendResponse) =>
+	{
+		/** Task IDs and their corresponding functions */
+		const tasks = {
+			optionsGet: optionsGet,
+			getStoredSetting: async (args) =>
+			{
+				return args.sendResponse(await getStoredSetting(
+					args.data.key, args.data.fallback
+				));
+			},
+			updateCurrentOptions: async (args) =>
+			{
+				await updateCurrentOptions(options);
+				return args.sendResponse(options);
+			}
+		};
+
+		if(tasks[data.task])
+		{
+			/** Perform task */
+			tasks[data.task]({ data, sender, sendResponse });
+		}
+
+		/** Keep `onMessage` channel open for asynchronous functions */
+		return true;
+	});
 
 	/**
 	 * [webNavigation] `onBeforeNavigate` listener

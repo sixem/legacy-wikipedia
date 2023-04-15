@@ -7,11 +7,15 @@
 	 */
 	const getStoredSetting = async (key, fallback = null) =>
 	{
-		return await chrome.runtime.sendMessage(
+		const response = await chrome.runtime.sendMessage(
 			chrome.runtime.id, {
 				task: 'getStoredSetting', key, fallback
 			}
 		);
+
+		console.log('response', response);
+
+		return response;
 	};
 	
 	/** Get current location */
@@ -22,6 +26,8 @@
 
 	/** Get stored settings */
 	const hideParameters = await getStoredSetting('hide-get-parameters', true);
+
+	console.log('hideParameters', hideParameters);
 
 	if(currentUrl.searchParams.get('useskin') && hideParameters !== false)
 	{
