@@ -25,8 +25,6 @@
 	/** Get stored settings */
 	const hideParameters = await getStoredSetting('hide-get-parameters', true);
 
-	console.log('hideParameters', hideParameters);
-
 	if(currentUrl.searchParams.get('useskin') && hideParameters !== false)
 	{
 		/** Remove the `useskin` parameter */
