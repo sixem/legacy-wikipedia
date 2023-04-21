@@ -23,15 +23,11 @@ mkdir -p "packages" && rm "packages/"*
 
 # Creates the packaged Firefox extension
 declare -a HAYSTACK=(
-    'chrome.runtime'
-    'chrome.storage',
-    'chrome.webNavigation'
+    'chrome'
 )
 
 declare -a REPLACE=(
-    'browser.runtime'
-    'browser.storage',
-    'browser.webNavigation'
+    'browser'
 )
 
 OUTPUT="ff_port-$TIMESTAMP"
